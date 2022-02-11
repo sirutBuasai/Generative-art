@@ -3,7 +3,6 @@
 #
 """
 Generative art practice
-https://www.youtube.com/watch?v=BMq2Jrvp9AA&ab_channel=Pixegami
 """
 # pylint: disable=W0311
 # pylint: disable=W0611
