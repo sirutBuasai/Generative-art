@@ -3,6 +3,7 @@
 #
 """
 Generative art practice
+https://www.youtube.com/watch?v=BMq2Jrvp9AA&ab_channel=Pixegami
 """
 # pylint: disable=W0311
 # pylint: disable=W0611
@@ -11,6 +12,7 @@ Generative art practice
 #
 import argparse
 import ast
+from curses import start_color
 from datetime import date, datetime
 import json
 import logging
@@ -37,7 +39,13 @@ DEFAULT_LOG_LEVEL = 'WARNING'
 #
 def main():
   """
-  Main Genrate Art Function
+    Args:
+      No arg
+  Returns:
+      Nothing
+  Raises:
+      Nothing
+
   """
 
   # Configure logging and arguments
@@ -105,33 +113,61 @@ def handle_arguments():
 
   return parser.parse_args()
 
-def randomize_point(size):
-  return (random.randint(0, size), random.randint(0, size))
+def randomize_point(start_size, end_size):
+  return (random.randint(start_size, end_size-start_size), random.randint(start_size, end_size-start_size))
+
+def randomize_color():
+  return (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+
+def gradient_color(start, end, factor):
+  reciprocal = 1-factor
+  r = (start[0] * reciprocal) + (end[0] * factor)
+  g = (start[1] * reciprocal) + (end[1] * factor)
+  b = (start[2] * reciprocal) + (end[2] * factor)
+  return (r, g, b)
 
 def generate_art():
   # Base image
   img_size = 128
+  padding = 12
   img_bg_color = (255, 255, 255)
   img = image.new('RGB', size=(img_size, img_size), color=img_bg_color)
   
   # Draw lines over background
   draw = imaged.Draw(img)
-  rand1 = randomize_point(img_size)
-  rand2 = randomize_point(img_size)
+  rand1 = randomize_point(padding, img_size)
+  rand2 = randomize_point(padding, img_size)
+  line_thickness = 1
+  dec = False
+  start_color = randomize_color()
+  end_color = randomize_color()
 
-  for i in range(27):
+  for i in range(10):
+
+    # Connect the start of new line to the end of old line
     if i == 0:
       pt1, pt2 = rand1, rand2
-    
+    elif i == 9:
+      pt1 = pt2
+      pt2 = rand1
     else:
       pt1 = pt2
-      pt2 = randomize_point(img_size)
-    
-    line_xy = (pt1, pt2)
-    line_color = (0, 0, 0)
-    draw.line(line_xy, fill=line_color)
+      pt2 = randomize_point(padding, img_size)
 
-  img.save('test_image.png')
+    # Vary line thickness
+    if line_thickness > 5:
+      dec = True
+    if dec: 
+      line_thickness -=1 
+    else: 
+      line_thickness += 1
+
+    line_xy = (pt1, pt2)
+    color_factor = random.randint(0,1)
+    line_color = gradient_color(start_color, end_color, color_factor)
+    draw.line(line_xy, fill=line_color, width=line_thickness)
+
+  img.save('test_image3.png', quality=95)
 
 #
 ######################################################################
