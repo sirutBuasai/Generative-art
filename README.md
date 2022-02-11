@@ -1,4 +1,5 @@
 # Just for fun project for creating generative art
+Artsy stuff
 
 ## Neons collection
-![neons0](https://github.com/sirutBuasai/gene-art/blob/master/neons/img/neon0.png) ![neons1](https://github.com/sirutBuasai/gene-art/blob/master/neons/img/neon1.png) ![neons2](https://github.com/sirutBuasai/gene-art/blob/master/neons/img/neon2.png) ![neons3](https://github.com/sirutBuasai/gene-art/blob/master/neons/img/neon3.png) ![neons4](https://github.com/sirutBuasai/gene-art/blob/master/neons/img/neon4.png) ![neons5](https://github.com/sirutBuasai/gene-art/blob/master/neons/img/neon5.png)
+![neons_display0](https://github.com/sirutBuasai/gene-art/blob/master/neons/display/display0.png) ![neons_display1](https://github.com/sirutBuasai/gene-art/blob/master/neons/display/display1.png) ![neons_display2](https://github.com/sirutBuasai/gene-art/blob/master/neons/display/display2.png) ![neons_display3](https://github.com/sirutBuasai/gene-art/blob/master/neons/display/display3.png) ![neons_display4](https://github.com/sirutBuasai/gene-art/blob/master/neons/display/display4.png) ![neons_display5](https://github.com/sirutBuasai/gene-art/blob/master/neons/display/display5.png)
