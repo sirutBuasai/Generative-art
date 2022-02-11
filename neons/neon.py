@@ -34,6 +34,11 @@ import colorsys
 DEFAULT_LOG_LEVEL = 'WARNING'
 DEFAULT_NUM_IMAGE = 4
 DEFAULT_PATH = os.path.dirname(os.path.realpath(__file__)) + '/img/'
+DEFAULT_SCALE = 2
+DEFAULT_SIZE = 256
+DEFAULT_PADDING = 24
+DEFAULT_THICKNESS_MIN = 2
+DEFAULT_THICKNESS_MAX = 32
 
 #
 ######################################################################
@@ -243,7 +248,13 @@ def center_image(x: int,
 #
 # generate_art()
 #
-def generate_art(img_num: int, path_dir: str) -> None:
+def generate_art(img_num: int,
+                path_dir: str,
+                scale: int,
+                target_size: int,
+                target_padding: int,
+                thickness_min: int,
+                thickness_max: int) -> None:
   """
   Main function to generate the art
     Args:
@@ -256,11 +267,6 @@ def generate_art(img_num: int, path_dir: str) -> None:
   """
 
   # Background image
-  scale = 2
-  target_size = 256
-  target_padding = 24
-  thickness_min = 2
-  thickness_max = 32
   img_size = target_size * scale
   padding = target_padding * scale
   img = generate_bg((0, 0, 0), (0, 0, 0), img_size)
@@ -327,8 +333,13 @@ def main():
 
   img_num = args.img_num
   save_path = args.path
+  scale = args.scale
+  size = args.size
+  padding = args.padding
+  tmin = args.tmin
+  tmax = args.tmax
   for i in range(img_num):
-    generate_art(i, save_path)
+    generate_art(i, save_path, scale, size, padding, tmin, tmax)
 
 #
 ######################################################################
@@ -399,6 +410,41 @@ def handle_arguments():
                       required=False,
                       default=DEFAULT_PATH,
                       help='Path to store all the images. Default: %(default)s')
+
+  parser.add_argument('--scale',
+                      action='store',
+                      type=int,
+                      required=False,
+                      default=DEFAULT_SCALE,
+                      help='Size of the image Default: %(default)s')
+
+  parser.add_argument('--size',
+                      action='store',
+                      type=int,
+                      required=False,
+                      default=DEFAULT_SIZE,
+                      help='Size of the image Default: %(default)s')
+
+  parser.add_argument('--padding',
+                      action='store',
+                      type=int,
+                      required=False,
+                      default=DEFAULT_PADDING,
+                      help='Size of the image Default: %(default)s')
+
+  parser.add_argument('--tmin',
+                      action='store',
+                      type=int,
+                      required=False,
+                      default=DEFAULT_THICKNESS_MIN,
+                      help='Size of the image Default: %(default)s')
+
+  parser.add_argument('--tmax',
+                      action='store',
+                      type=int,
+                      required=False,
+                      default=DEFAULT_THICKNESS_MAX,
+                      help='Size of the image Default: %(default)s')
 
   return parser.parse_args()
 
