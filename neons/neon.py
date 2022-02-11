@@ -301,7 +301,7 @@ def generate_art(img_num: int, path_dir: str) -> None:
     img = imagec.add(img, overlay_img)
 
   img = img.resize((target_size, target_size), resample=image.ANTIALIAS)
-  img.save(f'{path_dir}test_image{str(img_num)}.png', quality=95)
+  img.save(f'{path_dir}neon{str(img_num)}.png', quality=95)
 
 #
 ######################################################################
