@@ -39,13 +39,13 @@ DEFAULT_LOG_LEVEL = 'WARNING'
 #
 def main():
   """
+  Main function
     Args:
       No arg
   Returns:
       Nothing
   Raises:
       Nothing
-
   """
 
   # Configure logging and arguments
@@ -114,60 +114,136 @@ def handle_arguments():
   return parser.parse_args()
 
 def randomize_point(start_size, end_size):
+  """
+  Randomize points to draw the lines
+    Args:
+      start_size: range from 0-end_size as padding
+      end_size: largest possible pixel
+  Returns:
+      tuple of x,y coordinate within start and (end-start)
+  Raises:
+      Nothing
+  """
+
   return (random.randint(start_size, end_size-start_size), random.randint(start_size, end_size-start_size))
 
 def randomize_color():
+  """
+  Randomize color of the line
+    Args:
+      Nothing
+  Returns:
+      tuple of r,g,b values
+  Raises:
+      Nothing
+  """
+
   return (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
 def gradient_color(start, end, factor):
+  """
+  Generate gradient color within start color and end color.
+    Args:
+      start: starting color range
+      end: ending color range
+      factor: the offset of the end color from the start color
+  Returns:
+      tuple of r,g,b values
+  Raises:
+      Nothing
+  """
+
   reciprocal = 1-factor
-  r = (start[0] * reciprocal) + (end[0] * factor)
-  g = (start[1] * reciprocal) + (end[1] * factor)
-  b = (start[2] * reciprocal) + (end[2] * factor)
+  r = round((start[0] * reciprocal) + (end[0] * factor))
+  g = round((start[1] * reciprocal) + (end[1] * factor))
+  b = round((start[2] * reciprocal) + (end[2] * factor))
   return (r, g, b)
 
+def get_point(point_list, flag):
+  """
+  Get all the points coordinate into a list
+    Args:
+      point_list: list of points
+      flag: get x coordinate if given '0', and y if given '1'
+  Returns:
+      a list of either all x or y coordinate from point_list
+  Raises:
+      Nothing
+  """
+
+  point_result = []
+  for p1, p2 in point_list:
+    point_result.append(p1[flag])
+    point_result.append(p1[flag])
+
+  return point_result
+
 def generate_art():
+  """
+  Main function to generate the art
+    Args:
+      point_list: list of points
+      flag: get x coordinate if given '0', and y if given '1'
+  Returns:
+      a list of either all x or y coordinate from point_list
+  Raises:
+      Nothing
+  """
+
   # Base image
   img_size = 128
   padding = 12
   img_bg_color = (255, 255, 255)
   img = image.new('RGB', size=(img_size, img_size), color=img_bg_color)
   
-  # Draw lines over background
+  # Lines variables initilization
   draw = imaged.Draw(img)
-  rand1 = randomize_point(padding, img_size)
-  rand2 = randomize_point(padding, img_size)
-  line_thickness = 1
-  dec = False
   start_color = randomize_color()
   end_color = randomize_color()
 
+  # Generate all points
+  points = []
   for i in range(10):
-
-    # Connect the start of new line to the end of old line
     if i == 0:
-      pt1, pt2 = rand1, rand2
+      pt1 = randomize_point(padding, img_size)
+      pt2 = randomize_point(padding, img_size)
     elif i == 9:
       pt1 = pt2
-      pt2 = rand1
+      pt2 = randomize_point(padding, img_size)
     else:
       pt1 = pt2
       pt2 = randomize_point(padding, img_size)
 
-    # Vary line thickness
-    if line_thickness > 5:
-      dec = True
-    if dec: 
-      line_thickness -=1 
-    else: 
-      line_thickness += 1
+    points.append((pt1, pt2))
 
-    line_xy = (pt1, pt2)
-    color_factor = random.randint(0,1)
+  # Get the min and max of the points
+  x_coord = get_point(points, 0)
+  y_coord = get_point(points, 1)
+  min_x = min(x_coord)
+  max_x = max(x_coord)
+  min_y = min(y_coord)
+  max_y = max(y_coord)
+
+  # Centering the image
+  delta_x = min_x - (img_size - max_x)
+  delta_y = min_y - (img_size - max_y)
+  lines = []
+  for i, tuple in enumerate(points):
+    lines.append(
+      ((tuple[0][0] - delta_x // 2,
+      tuple[0][1] - delta_y // 2),
+      (tuple[1][0] - delta_x // 2,
+      tuple[1][1] - delta_y // 2)))
+
+  for i in range(len(points)):
+    # Setp up parameters and draw
+    line_thickness = random.randint(1,10)
+    line_xy = lines[i]
+    color_factor = random.random()
     line_color = gradient_color(start_color, end_color, color_factor)
     draw.line(line_xy, fill=line_color, width=line_thickness)
 
-  img.save('test_image3.png', quality=95)
+  img.save('test_image.png', quality=95)
 
 #
 ######################################################################
