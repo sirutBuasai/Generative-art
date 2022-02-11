@@ -23,14 +23,285 @@ import sys
 #
 # Non-standard Imports (can be added as needed)
 #
-from PIL import Image as image, ImageDraw as imaged
+from PIL import Image as image, ImageDraw as imaged, ImageChops as imagec
 import random
+import colorsys
 #
 ######################################################################
 #
 # Global variables
 #
 DEFAULT_LOG_LEVEL = 'WARNING'
+DEFAULT_NUM_IMAGE = 4
+DEFAULT_PATH = os.path.dirname(os.path.realpath(__file__)) + '/img/'
+
+#
+######################################################################
+#
+# randomize_point()
+#
+def generate_bg(c1: tuple[int, int, int],
+                c2: tuple[int, int, int],
+                size: int) -> image:
+  """
+  Randomize points to draw the lines
+  Args:
+    c1: first color
+    c2: second color
+    size: size of the background image
+  Returns:
+    the gradient color of c2 on top c1
+  Raises:
+    Nothing
+  """
+
+  base = image.new('RGB', size=(size, size), color=c1)
+  top = image.new('RGB', size=(size, size), color=c2)
+  mask = image.new('L', (size, size))
+  mask_data = []
+  for i in range(size):
+    mask_data.extend([int(255 * (i / size))] * size)
+  mask.putdata(mask_data)
+  base.paste(top, (0, 0), mask)
+
+  return base
+
+#
+######################################################################
+#
+# randomize_point()
+#
+def randomize_point(padding_px: int, size_px: int) -> tuple[int, int]:
+  """
+  Randomize points to draw the lines
+    Args:
+      padding_px: range from 0-size_px as padding
+      size_px: largest possible pixel
+  Returns:
+      tuple of x,y coordinate within start and (end-start)
+  Raises:
+      Nothing
+  """
+
+  return (random.randint(padding_px, size_px-padding_px), random.randint(padding_px, size_px-padding_px))
+
+#
+######################################################################
+#
+# randomize_color()
+#
+def randomize_color() -> tuple[int, int, int]:
+  """
+  Randomize color of the line
+    Args:
+      Nothing
+  Returns:
+      tuple of r,g,b values
+  Raises:
+      Nothing
+  """
+
+  # Initialize HSV to be converted to RGB
+  h = random.random()
+  s = random.uniform(0.5, 1)
+  v = random.uniform(0.5, 1)
+
+  # Convert HSV to RGB
+  float_rgb = colorsys.hsv_to_rgb(h, s, v)
+  r = 255 * float_rgb[0]
+  g = 255 * float_rgb[1]
+  b = 255 * float_rgb[2]
+  return (r, g, b)
+
+#
+######################################################################
+#
+# gradient_color()
+#
+def gradient_color(c1: tuple[int, int, int],
+                  c2: tuple[int, int, int],
+                  factor: float) -> tuple[int, int, int]:
+  """
+  Generate gradient color within start color and end color.
+    Args:
+      c1: starting color range
+      c2: ending color range
+      factor: the offset of the end color from the start color
+  Returns:
+      tuple of r,g,b values
+  Raises:
+      Nothing
+  """
+
+  reciprocal = 1-factor
+  r = round((c1[0] * reciprocal) + (c2[0] * factor))
+  g = round((c1[1] * reciprocal) + (c2[1] * factor))
+  b = round((c1[2] * reciprocal) + (c2[2] * factor))
+  return (r, g, b)
+
+#
+######################################################################
+#
+# generate_lines()
+#
+def generate_lines(num_lines: int,
+                  padding_px: int,
+                  size_px: int) -> list[tuple[
+                                    tuple[int, int],
+                                    tuple[int, int]]]:
+  """
+  Generate num_lines lines to draw on the background
+    Args:
+      num_lines: number of lines to draw
+      padding_px: padding offset from the frame
+      size_px: size of the background image
+  Returns:
+      list of tuples of lines in form [((x1,y1), (x2,y2)), ... ((xn,yn), (xm,ym))]
+  Raises:
+      Nothing
+  """
+
+  line_list = []
+  for i in range(num_lines):
+    if i == 0:
+      pt1 = randomize_point(padding_px, size_px)
+      pt2 = randomize_point(padding_px, size_px)
+    elif i == num_lines-1:
+      pt1 = pt2
+      pt2 = randomize_point(padding_px, size_px)
+    else:
+      pt1 = pt2
+      pt2 = randomize_point(padding_px, size_px)
+
+    line_list.append((pt1, pt2))
+
+  return line_list
+
+#
+######################################################################
+#
+# get_point()
+#
+def get_point(point_list: list[tuple[
+                          tuple[int, int],
+                          tuple[int, int]]],
+              flag: int) -> list[int]:
+  """
+  Get all the points coordinate into a list
+    Args:
+      point_list: list of points
+      flag: get x coordinate if given '0', and y if given '1'
+  Returns:
+      a list of either all x or y coordinate from point_list
+  Raises:
+      Nothing
+  """
+
+  point_result = []
+  for p1, p2 in point_list:
+    point_result.append(p1[flag])
+    point_result.append(p1[flag])
+
+  return point_result
+
+#
+######################################################################
+#
+# center_image()
+#
+def center_image(x: int,
+                y: int,
+                list_list: list[tuple[
+                            tuple[int, int],
+                            tuple[int, int]]]) -> list[tuple[
+                                                  tuple[int, int],
+                                                  tuple[int, int]]]:
+  """
+  Get all the points coordinate into a list
+    Args:
+      x: the delta_x value to center the img
+      y: the delta_y value to center the img
+      list_list: list of original line coordinates
+  Returns:
+      a list centered coordinates
+  Raises:
+      Nothing
+  """
+
+  lines = []
+  for i, coord in enumerate(list_list):
+    lines.append(
+      ((coord[0][0] - x // 2,
+      coord[0][1] - y // 2),
+      (coord[1][0] - x // 2,
+      coord[1][1] - y // 2)))
+
+  return lines
+
+#
+######################################################################
+#
+# generate_art()
+#
+def generate_art(img_num: int, path_dir: str) -> None:
+  """
+  Main function to generate the art
+    Args:
+      point_list: list of points
+      flag: get x coordinate if given '0', and y if given '1'
+  Returns:
+      a list of either all x or y coordinate from point_list
+  Raises:
+      Nothing
+  """
+
+  # Background image
+  scale = 2
+  target_size = 256
+  target_padding = 24
+  thickness_min = 2
+  thickness_max = 32
+  img_size = target_size * scale
+  padding = target_padding * scale
+  img = generate_bg((0, 0, 0), (0, 0, 0), img_size)
+
+  # Lines variables initilization
+  draw = imaged.Draw(img)
+  start_color = randomize_color()
+  end_color = randomize_color()
+
+  # Generate all lines to draw
+  lines = generate_lines(10, padding, img_size)
+
+  # Get the min and max of the all the lines
+  x_coord = get_point(lines, 0)
+  y_coord = get_point(lines, 1)
+  min_x = min(x_coord)
+  max_x = max(x_coord)
+  min_y = min(y_coord)
+  max_y = max(y_coord)
+
+  # Centering the image
+  delta_x = min_x - (img_size - max_x)
+  delta_y = min_y - (img_size - max_y)
+  lines = center_image(delta_x, delta_y, lines)
+
+  # Draw the lines onto the background
+  for i in range(len(lines)):
+    # Overlay camvas
+    overlay_img = generate_bg((0, 0, 0), (0,0,0), img_size)
+    overlay_draw = imaged.Draw(overlay_img)
+
+
+    # Set up parameters and draw
+    line_thickness = random.randint(thickness_min*scale, thickness_max*scale)
+    color_factor = random.random()
+    line_color = gradient_color(start_color, end_color, color_factor)
+    overlay_draw.line(lines[i], fill=line_color, width=line_thickness)
+    img = imagec.add(img, overlay_img)
+
+  img = img.resize((target_size, target_size), resample=image.ANTIALIAS)
+  img.save(f'{path_dir}test_image{str(img_num)}.png', quality=95)
 
 #
 ######################################################################
@@ -53,8 +324,11 @@ def main():
   _clean_loggers(args.log_level.upper())
   logger = _get_logger()
   logger.info("Log level is '%s'", args.log_level.upper())
- 
-  generate_art()
+
+  img_num = args.img_num
+  save_path = args.path
+  for i in range(img_num):
+    generate_art(i, save_path)
 
 #
 ######################################################################
@@ -111,139 +385,22 @@ def handle_arguments():
                       default=DEFAULT_LOG_LEVEL,
                       help='Logging verbosity. Default: %(default)s')
 
+  parser.add_argument('-n', '--img-num',
+                      action='store',
+                      type=int,
+                      required=False,
+                      choices=range(1, 101),
+                      default=DEFAULT_NUM_IMAGE,
+                      help='Number of images to produce. Default: %(default)s')
+
+  parser.add_argument('-p', '--path',
+                      action='store',
+                      type=str,
+                      required=False,
+                      default=DEFAULT_PATH,
+                      help='Path to store all the images. Default: %(default)s')
+
   return parser.parse_args()
-
-def randomize_point(start_size, end_size):
-  """
-  Randomize points to draw the lines
-    Args:
-      start_size: range from 0-end_size as padding
-      end_size: largest possible pixel
-  Returns:
-      tuple of x,y coordinate within start and (end-start)
-  Raises:
-      Nothing
-  """
-
-  return (random.randint(start_size, end_size-start_size), random.randint(start_size, end_size-start_size))
-
-def randomize_color():
-  """
-  Randomize color of the line
-    Args:
-      Nothing
-  Returns:
-      tuple of r,g,b values
-  Raises:
-      Nothing
-  """
-
-  return (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
-
-def gradient_color(start, end, factor):
-  """
-  Generate gradient color within start color and end color.
-    Args:
-      start: starting color range
-      end: ending color range
-      factor: the offset of the end color from the start color
-  Returns:
-      tuple of r,g,b values
-  Raises:
-      Nothing
-  """
-
-  reciprocal = 1-factor
-  r = round((start[0] * reciprocal) + (end[0] * factor))
-  g = round((start[1] * reciprocal) + (end[1] * factor))
-  b = round((start[2] * reciprocal) + (end[2] * factor))
-  return (r, g, b)
-
-def get_point(point_list, flag):
-  """
-  Get all the points coordinate into a list
-    Args:
-      point_list: list of points
-      flag: get x coordinate if given '0', and y if given '1'
-  Returns:
-      a list of either all x or y coordinate from point_list
-  Raises:
-      Nothing
-  """
-
-  point_result = []
-  for p1, p2 in point_list:
-    point_result.append(p1[flag])
-    point_result.append(p1[flag])
-
-  return point_result
-
-def generate_art():
-  """
-  Main function to generate the art
-    Args:
-      point_list: list of points
-      flag: get x coordinate if given '0', and y if given '1'
-  Returns:
-      a list of either all x or y coordinate from point_list
-  Raises:
-      Nothing
-  """
-
-  # Base image
-  img_size = 128
-  padding = 12
-  img_bg_color = (255, 255, 255)
-  img = image.new('RGB', size=(img_size, img_size), color=img_bg_color)
-  
-  # Lines variables initilization
-  draw = imaged.Draw(img)
-  start_color = randomize_color()
-  end_color = randomize_color()
-
-  # Generate all points
-  points = []
-  for i in range(10):
-    if i == 0:
-      pt1 = randomize_point(padding, img_size)
-      pt2 = randomize_point(padding, img_size)
-    elif i == 9:
-      pt1 = pt2
-      pt2 = randomize_point(padding, img_size)
-    else:
-      pt1 = pt2
-      pt2 = randomize_point(padding, img_size)
-
-    points.append((pt1, pt2))
-
-  # Get the min and max of the points
-  x_coord = get_point(points, 0)
-  y_coord = get_point(points, 1)
-  min_x = min(x_coord)
-  max_x = max(x_coord)
-  min_y = min(y_coord)
-  max_y = max(y_coord)
-
-  # Centering the image
-  delta_x = min_x - (img_size - max_x)
-  delta_y = min_y - (img_size - max_y)
-  lines = []
-  for i, tuple in enumerate(points):
-    lines.append(
-      ((tuple[0][0] - delta_x // 2,
-      tuple[0][1] - delta_y // 2),
-      (tuple[1][0] - delta_x // 2,
-      tuple[1][1] - delta_y // 2)))
-
-  for i in range(len(points)):
-    # Setp up parameters and draw
-    line_thickness = random.randint(1,10)
-    line_xy = lines[i]
-    color_factor = random.random()
-    line_color = gradient_color(start_color, end_color, color_factor)
-    draw.line(line_xy, fill=line_color, width=line_thickness)
-
-  img.save('test_image.png', quality=95)
 
 #
 ######################################################################
